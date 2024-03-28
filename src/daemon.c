@@ -1,11 +1,5 @@
 #include "keyd.h"
 
-struct config_ent {
-	struct config config;
-	struct keyboard *kbd;
-	struct config_ent *next;
-};
-
 static int ipcfd = -1;
 static struct vkbd *vkbd = NULL;
 static struct config_ent *configs;
@@ -182,7 +176,7 @@ static void load_configs()
 	closedir(dh);
 }
 
-static struct config_ent *lookup_config_ent(uint16_t vendor,
+struct config_ent *lookup_config_ent(uint16_t vendor,
 					    uint16_t product,
 					    uint8_t flags)
 {

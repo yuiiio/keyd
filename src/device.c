@@ -202,10 +202,26 @@ int device_scan(struct device devices[MAX_DEVICES])
 	ndevs = 0;
 	for(i = 0; i < n; i++) {
 		struct device *d;
+        struct config_ent *ent;
+
 		pthread_join(workers[i].tid, (void**)&d);
 
-		if (d)
-			devices[ndevs++] = workers[i].dev;
+		if (d) {
+            struct device work_d = workers[i].dev;
+            if (!work_d.is_virtual) {
+                uint8_t flags = 0;
+                if (work_d.capabilities & CAP_KEYBOARD)
+                    flags |= ID_KEYBOARD;
+                if (work_d.capabilities & (CAP_MOUSE|CAP_MOUSE_ABS))
+                    flags |= ID_MOUSE;
+
+                if ((ent = lookup_config_ent(work_d.vendor_id, work_d.product_id, flags))) {
+                    devices[ndevs++] = work_d;
+                } else {
+                    // don't add device
+                }
+            }
+        }
 	}
 
 	closedir(dh);
@@ -269,8 +285,22 @@ int devmon_read_device(int fd, struct device *dev)
 
 		snprintf(path, sizeof path, "/dev/input/%s", ev->name);
 
-		if (!device_init(path, dev))
-			return 0;
+		if (!device_init(path, dev)) {
+            if (!dev->is_virtual) {
+                struct config_ent *ent;
+                uint8_t flags = 0;
+                if (dev->capabilities & CAP_KEYBOARD)
+                    flags |= ID_KEYBOARD;
+                if (dev->capabilities & (CAP_MOUSE|CAP_MOUSE_ABS))
+                    flags |= ID_MOUSE;
+
+                if ((ent = lookup_config_ent(dev->vendor_id, dev->product_id, flags))) {
+                    return 0;
+                } else {
+                    return -1; // don't add device
+                }
+            }
+        }
 	}
 }
 

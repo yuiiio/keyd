@@ -100,4 +100,14 @@ int ipc_connect();
 extern struct device device_table[MAX_DEVICES];
 extern size_t device_table_sz;
 
+struct config_ent {
+	struct config config;
+	struct keyboard *kbd;
+	struct config_ent *next;
+};
+
+struct config_ent *lookup_config_ent(uint16_t vendor,
+					    uint16_t product,
+					    uint8_t flags);
+
 #endif
