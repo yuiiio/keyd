@@ -285,20 +285,21 @@ int devmon_read_device(int fd, struct device *dev)
 
 		snprintf(path, sizeof path, "/dev/input/%s", ev->name);
 
-		if (!device_init(path, dev)) {
-            if (!dev->is_virtual) {
-                struct config_ent *ent;
-                uint8_t flags = 0;
-                if (dev->capabilities & CAP_KEYBOARD)
-                    flags |= ID_KEYBOARD;
-                if (dev->capabilities & (CAP_MOUSE|CAP_MOUSE_ABS))
-                    flags |= ID_MOUSE;
+        if (!device_init(path, dev)) {
+            if (dev->is_virtual) {
+                return -1; // don't add device
+            }
+            struct config_ent *ent;
+            uint8_t flags = 0;
+            if (dev->capabilities & CAP_KEYBOARD)
+                flags |= ID_KEYBOARD;
+            if (dev->capabilities & (CAP_MOUSE|CAP_MOUSE_ABS))
+                flags |= ID_MOUSE;
 
-                if ((ent = lookup_config_ent(dev->vendor_id, dev->product_id, flags))) {
-                    return 0;
-                } else {
-                    return -1; // don't add device
-                }
+            if ((ent = lookup_config_ent(dev->vendor_id, dev->product_id, flags))) {
+                return 0;
+            } else {
+                return -1; // don't add device
             }
         }
 	}
